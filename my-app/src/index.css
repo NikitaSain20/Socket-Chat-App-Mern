@@ -1,8 +1,8 @@
 @import "tailwindcss";
-@plugin "daisyui"{
+@plugin "daisyui" {
   themes: all;
 }
 
-
-
-
+body {
+  @apply bg-white min-h-screen;
+}

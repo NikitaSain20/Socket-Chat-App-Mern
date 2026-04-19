@@ -2,9 +2,10 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { axiosInstance } from "../lib/axios";
+import { use } from "react";
+import { useNavigate } from "react-router-dom";
 
-
-const BASE_URL =  "http://localhost:5001" ;
+const BASE_URL = "http://localhost:5001";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -14,8 +15,6 @@ export const useAuthStore = create((set, get) => ({
   isCheckingAuth: true,
   onlineUsers: [],
   socket: null,
- 
-
 
   checkAuth: async () => {
     try {
@@ -31,13 +30,12 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  signup: async (data) => {
+  signup: async (data, nav) => {
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
+      nav("/login");
       toast.success("Account created successfully");
-      get().connectSocket();
     } catch (error) {
       toast.error(error.response.data.message);
     } finally {
@@ -85,7 +83,6 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-
   connectSocket: () => {
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
@@ -102,7 +99,6 @@ export const useAuthStore = create((set, get) => ({
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
-    
   },
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();

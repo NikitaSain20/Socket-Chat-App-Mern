@@ -89,7 +89,7 @@ const Sidebar = () => {
           >
             {/* Avatar + Online indicator */}
             <div className="relative mx-auto lg:mx-0">
-              <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-400 to-purple-500 text-white font-bold text-lg mb-3">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-400 to-purple-500 text-white font-bold text-lg mb-3">
                 {user.profilePic ? (
                   <img
                     src={user.profilePic}
