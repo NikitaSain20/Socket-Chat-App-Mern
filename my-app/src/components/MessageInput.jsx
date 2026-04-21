@@ -13,16 +13,14 @@ const MessageInput = () => {
   const isTyping = useRef(false);
 
   const { sendMessage, selectedUser } = useChatStore();
-  const { socket, authUser } = useAuthStore(); // ✅ FIXED
+  const { socket, authUser } = useAuthStore();
 
-  // ---------------- Image handling ----------------
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file || !file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
-
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
@@ -33,20 +31,15 @@ const MessageInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // ---------------- Send message ----------------
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
 
     try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-      });
-
+      await sendMessage({ text: text.trim(), image: imagePreview });
       setText("");
       setImagePreview(null);
-      fileInputRef.current && (fileInputRef.current.value = "");
+      if (fileInputRef.current) fileInputRef.current.value = "";
 
       socket?.emit("stopTyping", {
         senderId: authUser._id,
@@ -58,7 +51,6 @@ const MessageInput = () => {
     }
   };
 
-  // ---------------- Typing logic ----------------
   const handleTyping = (e) => {
     const value = e.target.value;
     setText(value);
@@ -72,10 +64,8 @@ const MessageInput = () => {
       });
       isTyping.current = true;
     }
-    console.log(authUser._id,selectedUser._id,)
 
     clearTimeout(typingTimeout.current);
-
     typingTimeout.current = setTimeout(() => {
       socket.emit("stopTyping", {
         senderId: authUser._id,
@@ -85,7 +75,14 @@ const MessageInput = () => {
     }, 1000);
   };
 
-  // ---------------- Cleanup on unmount ----------------
+  // Handle Enter key
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
+  };
+
   useEffect(() => {
     return () => {
       clearTimeout(typingTimeout.current);
@@ -98,35 +95,36 @@ const MessageInput = () => {
     };
   }, [socket, selectedUser, authUser]);
 
+  const canSend = text.trim() || imagePreview;
+
   return (
-    <div className="p-4 w-full">
+    <div className="mc-input-bar">
+      {/* Image preview */}
       {imagePreview && (
-        <div className="mb-3 flex items-center gap-2">
-          <div className="relative">
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="w-20 h-20 object-cover rounded-lg border border-zinc-700"
-            />
+        <div className="mc-img-preview">
+          <div className="mc-img-preview-wrap">
+            <img src={imagePreview} alt="Preview" />
             <button
               type="button"
               onClick={removeImage}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300 flex items-center justify-center"
+              className="mc-img-preview-remove"
             >
-              <X className="size-3" />
+              <X size={10} />
             </button>
           </div>
         </div>
       )}
 
-      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-        <div className="flex-1 flex gap-2">
+      {/* Input row */}
+      <form onSubmit={handleSendMessage}>
+        <div className="mc-input-row">
           <input
             type="text"
-            className="w-full input input-bordered rounded-full input-sm sm:input-md "
-            placeholder="Type a message..."
+            className="mc-text-input"
+            placeholder="Type a message…"
             value={text}
             onChange={handleTyping}
+            onKeyDown={handleKeyDown}
           />
 
           <input
@@ -135,26 +133,27 @@ const MessageInput = () => {
             className="hidden"
             ref={fileInputRef}
             onChange={handleImageChange}
+            style={{ display: "none" }}
           />
 
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle ${
-              imagePreview ? "text-emerald-500" : "text-zinc-400"
-            }`}
+            className={`mc-attach-btn${imagePreview ? " has-image" : ""}`}
             onClick={() => fileInputRef.current?.click()}
+            title="Attach image"
           >
-            <Image size={20} className="text-black" />
+            <Image size={18} />
+          </button>
+
+          <button
+            type="submit"
+            className="mc-send-btn"
+            disabled={!canSend}
+            title="Send message"
+          >
+            <Send size={16} />
           </button>
         </div>
-
-        <button
-          type="submit"
-          className="btn btn-sm btn-circle"
-          disabled={!text.trim() && !imagePreview}
-        >
-          <Send size={22}  className="text-black"/>
-        </button>
       </form>
     </div>
   );

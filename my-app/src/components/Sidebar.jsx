@@ -22,7 +22,6 @@ const Sidebar = () => {
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
-  // ------------------- INITIAL FETCH -------------------
   useEffect(() => {
     (async () => {
       await getUsers();
@@ -30,15 +29,9 @@ const Sidebar = () => {
     })();
   }, []);
 
-  // ------------------- SUBSCRIBE TO SOCKET -------------------
   useEffect(() => {
-    // if (!socket) return;
-
     subscribeToMessages();
-
-    return () => {
-      unsubscribeFromMessages();
-    };
+    return () => { unsubscribeFromMessages(); };
   }, [selectedUser]);
 
   const filteredUsers = showOnlineOnly
@@ -48,79 +41,74 @@ const Sidebar = () => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
-      <div className="border-b border-base-300 w-full p-5">
-        <div className="flex items-center gap-2">
-          <Users className="size-6" />
-          <span className="font-medium hidden lg:block">Contacts</span>
+    <aside className="mc-sidebar">
+      {/* Header */}
+      <div className="mc-sidebar-head">
+        <div className="mc-sidebar-headtitle">
+          <Users size={17} />
+          <span>Contacts</span>
         </div>
 
-        {/* Online filter */}
-        <div className="mt-3 hidden lg:flex items-center gap-2">
-          <label className="cursor-pointer flex items-center gap-2">
+        <div className="mc-sidebar-filter">
+          <label className="mc-filter-toggle">
             <input
               type="checkbox"
               checked={showOnlineOnly}
               onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="checkbox checkbox-sm"
             />
-            <span className="text-sm">Show online only</span>
+            Show online only
           </label>
-          <span className="text-xs text-zinc-500">
-            ({onlineUsers.length - 1} online)
-          </span>
+          <span className="mc-online-badge">{onlineUsers.length - 1} online</span>
         </div>
       </div>
 
-      <div className="overflow-y-auto w-full py-3">
-        {filteredUsers.map((user) => (
-          <button
-            key={user._id}
-            className={`
-              w-full p-3 flex items-center gap-3
-              hover:bg-base-300 transition-colors
-              ${selectedUser?._id === user._id ? "bg-base-300 ring-1 ring-base-300" : ""}
-            `}
-            onClick={async () => {
-              setSelectedUser(user); // Set current chat
-              clearUnreadForUser(user._id); // Clear unread badge
-              await getMessages(user._id); // Fetch messages & mark as seen
-            }}
-          >
-            {/* Avatar + Online indicator */}
-            <div className="relative mx-auto lg:mx-0">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-400 to-purple-500 text-white font-bold text-lg mb-3">
-                {user.profilePic ? (
-                  <img
-                    src={user.profilePic}
-                    alt={user.fullName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  user.fullName?.charAt(0).toUpperCase()
-                )}
+      {/* Contacts */}
+      <div className="mc-contacts-list">
+        {filteredUsers.map((user) => {
+          const isActive = selectedUser?._id === user._id;
+          const isOnline = onlineUsers.includes(user._id);
+          const unread = unreadCounts?.[user._id];
+
+          return (
+            <button
+              key={user._id}
+              className={`mc-contact-item${isActive ? " active" : ""}`}
+              onClick={async () => {
+                setSelectedUser(user);
+                clearUnreadForUser(user._id);
+                await getMessages(user._id);
+              }}
+            >
+              {/* Avatar */}
+              <div className="mc-contact-avatar-wrap">
+                <div className="mc-contact-avatar">
+                  {user.profilePic ? (
+                    <img src={user.profilePic} alt={user.fullName} />
+                  ) : (
+                    user.fullName?.charAt(0).toUpperCase()
+                  )}
+                </div>
+                {isOnline && <span className="mc-online-dot" />}
               </div>
-              {onlineUsers.includes(user._id) && (
-                <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
+
+              {/* Info */}
+              <div className="mc-contact-info">
+                <div className="mc-contact-name">{user.fullName}</div>
+                <div className={`mc-contact-status${isOnline ? " online" : ""}`}>
+                  {isOnline ? "● Online" : "Offline"}
+                </div>
+              </div>
+
+              {/* Unread badge */}
+              {unread > 0 && (
+                <span className="mc-unread-badge">{unread > 9 ? "9+" : unread}</span>
               )}
-            </div>
-
-            {/* User info */}
-            <div className="hidden lg:block text-left min-w-0">
-              <div className="font-medium truncate">{user.fullName}</div>
-              <div className="text-sm text-zinc-400">
-                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
-
-                {unreadCounts?.[user._id] > 0 && (
-                  <div className="text-red-600 text-xs">New Messages</div>
-                )}
-              </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
 
         {filteredUsers.length === 0 && (
-          <div className="text-center text-zinc-500 py-4">No online users</div>
+          <div className="mc-empty-state">No users found</div>
         )}
       </div>
     </aside>
