@@ -29,13 +29,17 @@ const App = () => {
 
   if (isCheckingAuth && !authUser)
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="size-10 animate-spin" />
+      <div style={{
+        display:"flex", alignItems:"center", justifyContent:"center",
+        height:"100vh", background:"#050C1A", color:"#60A5FA"
+      }}>
+        <Loader style={{ width:36, height:36, animation:"spin 1s linear infinite" }} />
       </div>
     );
 
   return (
-    <div data-theme={theme}>
+    /* data-theme removed — our custom dark CSS tokens take full control */
+    <div style={{ minHeight:"100vh", background:"transparent" }}>
       <Navbar />
       <Routes>
         <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
@@ -43,11 +47,21 @@ const App = () => {
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
-         <Route path="/videoCall" element={authUser?<VideoCallPage/>:<Navigate to="/login"/>}/>
-        
+        <Route path="/videoCall" element={authUser ? <VideoCallPage /> : <Navigate to="/login" />} />
       </Routes>
 
-      <Toaster />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "rgba(13,26,48,0.95)",
+            color: "#F0F6FF",
+            border: "1px solid rgba(59,130,246,0.25)",
+            backdropFilter: "blur(12px)",
+            fontSize: "13.5px",
+          },
+        }}
+      />
     </div>
   );
 };
